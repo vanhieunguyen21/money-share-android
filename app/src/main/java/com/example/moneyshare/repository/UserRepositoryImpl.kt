@@ -1,10 +1,29 @@
 package com.example.moneyshare.repository
 
+import android.net.Uri
 import android.util.Log
-import com.example.moneyshare.domain.model.ResultWithMessage
-import com.example.moneyshare.network.response.CheckUsernameResponse
+import androidx.core.net.toFile
+import com.example.moneyshare.auth.Auth
+import com.example.moneyshare.domain.model.User
+import com.example.moneyshare.network.dto.UserDTO
+import com.example.moneyshare.network.request.LoginRequest
+import com.example.moneyshare.network.request.RegisterRequest
+import com.example.moneyshare.network.request.UpdateUserRequest
+import com.example.moneyshare.network.response.ErrorResponse
+import com.example.moneyshare.network.response.LoginResponse
+import com.example.moneyshare.network.response.RefreshTokenResponse
+import com.example.moneyshare.network.response.SimpleResponse
 import com.example.moneyshare.network.service.UserService
+import com.google.gson.Gson
+import okhttp3.MediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
+import java.io.InputStream
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.util.*
 
 class UserRepositoryImpl(
     private val userService: UserService
@@ -13,27 +32,154 @@ class UserRepositoryImpl(
         private const val TAG = "UserRepositoryImpl"
     }
 
-    override suspend fun checkUsernameAvailability(username: String): ResultWithMessage<Boolean> {
-        val response: Response<CheckUsernameResponse>
+    override suspend fun checkUsernameAvailability(username: String): Result<Boolean> {
+        val response: Response<SimpleResponse>
         try {
             response = userService.checkUsernameAvailability(username)
         } catch (e: Exception) {
             e.printStackTrace()
-            return ResultWithMessage(false, e.message)
+            return Result.failure(e)
         }
         return if (response.isSuccessful) {
             val body = response.body()
-            if (body != null) {
-                if (body.requirement && body.available) {
-                    ResultWithMessage(true, null)
-                } else {
-                    ResultWithMessage(false, body.message)
-                }
-            } else {
-                ResultWithMessage(false, "Return body is null")
-            }
+            if (body != null) Result.success(body.result)
+            else Result.failure(Exception("Response body is empty"))
         } else {
-            ResultWithMessage(false, "Failed to check username availability")
+            val errorBody =
+                Gson().fromJson(response.errorBody()?.charStream(), ErrorResponse::class.java)
+            Result.failure(Exception(errorBody.message))
+        }
+    }
+
+    override suspend fun register(
+        username: String,
+        password: String,
+        displayName: String
+    ): Result<Boolean> {
+        val request = RegisterRequest(username, password, displayName)
+        val response: Response<SimpleResponse>
+
+        try {
+            response = userService.register(request)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return Result.failure(e)
+        }
+        return if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) Result.success(body.result)
+            else Result.failure(Exception("Response body is empty"))
+        } else {
+            val errorBody =
+                Gson().fromJson(response.errorBody()?.charStream(), ErrorResponse::class.java)
+            Result.failure(Exception(errorBody.message))
+        }
+    }
+
+    override suspend fun login(username: String, password: String): Result<LoginResponse> {
+        val request = LoginRequest(username, password)
+        val response: Response<LoginResponse>
+
+        try {
+            response = userService.login(request)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return Result.failure(e)
+        }
+        return if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) Result.success(body)
+            else Result.failure(Exception("Response body is empty"))
+        } else {
+            val errorBody =
+                Gson().fromJson(response.errorBody()?.charStream(), ErrorResponse::class.java)
+            Result.failure(Exception(errorBody?.message))
+        }
+    }
+
+    override suspend fun getLoggedInUser(authToken: String): Result<User> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun refreshAccessToken(refreshToken: String): Result<String> {
+        val response: Response<RefreshTokenResponse>
+        try {
+            response = userService.refreshAccessToken(refreshToken)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return Result.failure(e)
+        }
+        return if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) Result.success(body.accessToken)
+            else Result.failure(Exception("Response body is empty"))
+        } else {
+            val errorBody =
+                Gson().fromJson(response.errorBody()?.charStream(), ErrorResponse::class.java)
+            Result.failure(Exception(errorBody.message))
+        }
+    }
+
+    override suspend fun updateUser(
+        userID: Long,
+        accessToken: String,
+        displayName: String?,
+        password: String?,
+        phoneNumber: String?,
+        emailAddress: String?,
+        dateOfBirth: Instant?
+    ): Result<User> {
+        val request = UpdateUserRequest(
+            displayName = displayName,
+            password = password,
+            phoneNumber = phoneNumber,
+            emailAddress = emailAddress,
+            dateOfBirth = if (dateOfBirth == null) null else {
+                val zonedDate = dateOfBirth.atZone(ZoneId.of("UTC"))
+                "%04d-%02d-%02d".format(zonedDate.year, zonedDate.monthValue, zonedDate.dayOfMonth)
+            }
+        )
+        val response: Response<UserDTO>
+        try {
+            response = userService.updateUser(accessToken, userID, request)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return Result.failure(e)
+        }
+        return if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) Result.success(body.toUser())
+            else Result.failure(Exception("Response body is empty"))
+        } else {
+            val errorBody =
+                Gson().fromJson(response.errorBody()?.charStream(), ErrorResponse::class.java)
+            Result.failure(Exception(errorBody.message))
+        }
+    }
+
+    override suspend fun uploadUserProfileImage(
+        userID: Long,
+        accessToken: String,
+        inputStream: InputStream,
+        fileName: String?,
+    ): Result<User> {
+        val fileBody = RequestBody.create(MediaType.parse("multipart/form-data"), inputStream.readBytes())
+        val filePart = MultipartBody.Part.createFormData("file", fileName, fileBody)
+        val response: Response<UserDTO>
+        try {
+            response = userService.uploadProfileImage(accessToken, userID, filePart)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return Result.failure(e)
+        }
+        return if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) Result.success(body.toUser())
+            else Result.failure(Exception("Response body is empty"))
+        } else {
+            val errorBody =
+                Gson().fromJson(response.errorBody()?.charStream(), ErrorResponse::class.java)
+            Result.failure(Exception(errorBody.message))
         }
     }
 }

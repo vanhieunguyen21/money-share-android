@@ -1,7 +1,5 @@
 package com.example.moneyshare.presentation.components
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -29,12 +27,15 @@ import com.example.moneyshare.domain.model.Group
 import java.text.DateFormat
 import java.util.*
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun GroupDetail(
     group: Group,
     modifier: Modifier = Modifier,
+    memberId: Long = 0L,
 ) {
+    var memberExpense by remember(group, memberId) {
+        mutableStateOf(group.members.find { it.user.id == memberId }?.totalExpense)
+    }
 
     Column(modifier = modifier) {
         // Group statistics
@@ -54,7 +55,7 @@ fun GroupDetail(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "$10",
+                        text = "$%.2f".format(memberExpense),
                         modifier = Modifier.fillMaxWidth(),
                         style = MaterialTheme.typography.body1,
                         textAlign = TextAlign.Center
@@ -124,7 +125,6 @@ fun GroupDetail(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ExpenseItem(
     expense: Expense,
@@ -263,7 +263,7 @@ fun ExpenseStatusCard(
     val color = remember {
         when (status) {
             ExpenseStatus.Pending -> Color.Yellow
-            ExpenseStatus.Accepted -> Color.Green
+            ExpenseStatus.Approved -> Color.Green
             ExpenseStatus.Denied -> Color.Red
         }
     }

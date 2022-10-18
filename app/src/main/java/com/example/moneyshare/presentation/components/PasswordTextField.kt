@@ -1,13 +1,12 @@
 package com.example.moneyshare.presentation.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -22,7 +21,7 @@ fun PasswordTextField(
     value: String,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
-    errorLabel: String = "",
+    errorMessage: String = "",
     onValueChange: (String) -> Unit,
     label: String = "",
     imeAction: ImeAction = ImeAction.Done,
@@ -30,11 +29,11 @@ fun PasswordTextField(
 ) {
     var isShowPassword by remember { mutableStateOf(false) }
 
-    Column {
+    Column(modifier = modifier) {
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = modifier,
+            modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
@@ -67,9 +66,15 @@ fun PasswordTextField(
                 false -> PasswordVisualTransformation()
             },
         )
-
-        if (isError) {
-            Text(errorLabel, color = Color.Red)
+        if (isError && errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally),
+                style = MaterialTheme.typography.caption,
+            )
         }
     }
 }

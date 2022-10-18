@@ -1,43 +1,71 @@
 package com.example.moneyshare.repository
 
-import com.example.moneyshare.domain.data_source.room.AppDatabase
-import com.example.moneyshare.domain.data_source.room.entity.GroupEntity
-import com.example.moneyshare.domain.data_source.room.entity.PaymentBatchEntity
-import com.example.moneyshare.domain.data_source.room.mapper.EntityMapper
+import com.example.moneyshare.auth.Auth
 import com.example.moneyshare.domain.model.Group
-import java.util.*
+import com.example.moneyshare.network.dto.GroupDTO
+import com.example.moneyshare.network.request.GroupCreationRequest
+import com.example.moneyshare.network.response.ErrorResponse
+import com.example.moneyshare.network.service.GroupService
+import com.google.gson.Gson
+import retrofit2.Response
 
 class GroupRepositoryImpl(
-    private val appDatabase: AppDatabase,
+    private val groupService: GroupService
 ) : GroupRepository {
-    override suspend fun createGroup(name: String): Group? {
-//        var generatedId = 0L
-//        appDatabase.runInTransaction {
-//            try {
-//                // Insert group
-//                generatedId = appDatabase.groupDao().insert(GroupEntity(name = name))[0]
-//                // Insert new payment batch
-//                appDatabase.paymentBatchDao().insert(
-//                    PaymentBatchEntity(
-//                        startTimestamp = Calendar.getInstance().timeInMillis,
-//                        groupId = generatedId
-//                    )
-//                )
-//            } catch (ex: Exception) {
-//                ex.printStackTrace()
-//                generatedId = 0
-//            }
-//        }
-//        if (generatedId != 0L) {
-//            val groupEntity = appDatabase.groupDao().get(generatedId)
-//            return if (groupEntity == null) null else EntityMapper.mapToGroup(groupEntity)
-//        }
-        return null
+    override suspend fun createGroup(name: String): Result<Group> {
+        val request = GroupCreationRequest(name)
+        val response: Response<GroupDTO>
+        try {
+            response = groupService.createGroup(Auth.getAccessToken()!!, request)
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+        return if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) Result.success(body.toGroup())
+            else Result.failure(Exception("Response body is empty"))
+        } else {
+            val errorBody =
+                Gson().fromJson(response.errorBody()?.charStream(), ErrorResponse::class.java)
+            Result.failure(Exception(errorBody.message))
+        }
     }
 
-    override suspend fun getAllGroups(): List<Group> {
-        TODO()
-//        val groupEntities = groupDao.getAll()
-//        return groupEntities.map(EntityMapper::mapToGroup)
+    override suspend fun getGroupByUser(userID: Long): Result<List<Group>> {
+        val response: Response<List<GroupDTO>>
+        try {
+            response = groupService.getGroupByUser(Auth.getAccessToken()!!, userID)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return Result.failure(e)
+        }
+        return if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) Result.success(body.map { it.toGroup() })
+            else Result.failure(Exception("Response body is empty"))
+        } else {
+            val errorBody =
+                Gson().fromJson(response.errorBody()?.charStream(), ErrorResponse::class.java)
+            Result.failure(Exception(errorBody.message))
+        }
     }
+
+    override suspend fun getGroupByID(groupID: Long): Result<Group> {
+        val response: Response<GroupDTO>
+        try {
+            response = groupService.getGroupByID(Auth.getAccessToken()!!, groupID)
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+        return if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) Result.success(body.toGroup())
+            else Result.failure(Exception("Response body is empty"))
+        } else {
+            val errorBody =
+                Gson().fromJson(response.errorBody()?.charStream(), ErrorResponse::class.java)
+            Result.failure(Exception(errorBody.message))
+        }
+    }
+
 }

@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 private val LightThemeColors = lightColors(
     primary = Blue600,
     primaryVariant = Blue400,
-    onPrimary = Black2,
+    onPrimary = Color.White,
     secondary = Color.White,
     secondaryVariant = Teal300,
     onSecondary = Color.Black,

@@ -98,11 +98,11 @@ fun GroupDashboard(
                                 DropdownMenuItem(
                                     onClick = {
                                         selectedGroupIndex = index
-                                        selectedGroupName = group.name.orEmpty()
+                                        selectedGroupName = group.name
                                         dropDownExpanded = false
                                     }, modifier = Modifier.height(36.dp)
                                 ) {
-                                    Text(group.name.orEmpty(), maxLines = 1)
+                                    Text(group.name, maxLines = 1)
                                 }
                             }
                             Divider()

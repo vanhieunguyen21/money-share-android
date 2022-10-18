@@ -1,6 +1,7 @@
 package com.example.moneyshare.di
 
-import com.example.moneyshare.domain.data_source.room.AppDatabase
+import com.example.moneyshare.network.service.GroupService
+import com.example.moneyshare.room.AppDatabase
 import com.example.moneyshare.network.service.UserService
 import com.example.moneyshare.repository.GroupRepository
 import com.example.moneyshare.repository.GroupRepositoryImpl
@@ -17,8 +18,8 @@ import javax.inject.Singleton
 object RepositoryModule {
     @Singleton
     @Provides
-    fun provideGroupRepository(appDatabase: AppDatabase): GroupRepository {
-        return GroupRepositoryImpl(appDatabase)
+    fun provideGroupRepository(groupService: GroupService): GroupRepository {
+        return GroupRepositoryImpl(groupService)
     }
 
     @Singleton

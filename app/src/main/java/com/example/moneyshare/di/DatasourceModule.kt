@@ -2,8 +2,8 @@ package com.example.moneyshare.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.moneyshare.domain.data_source.room.AppDatabase
-import com.example.moneyshare.domain.data_source.room.dao.GroupDao
+import com.example.moneyshare.room.AppDatabase
+import com.example.moneyshare.room.dao.GroupDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
