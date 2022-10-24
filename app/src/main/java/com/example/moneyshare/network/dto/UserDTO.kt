@@ -4,6 +4,10 @@ import com.example.moneyshare.domain.model.User
 import com.google.gson.annotations.SerializedName
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 data class UserDTO(
@@ -20,19 +24,9 @@ data class UserDTO(
     @SerializedName("emailAddress")
     val emailAddress: String? = null,
     @SerializedName("dateOfBirth")
-    val dateOfBirth: String? = null,
+    val dateOfBirth: Long? = null,
 ) {
     fun toUser(): User {
-        var dob: Instant? = null
-        // Parse date of birth
-        if (dateOfBirth != null) {
-            try {
-                dob = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    .parse(dateOfBirth)?.toInstant()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
         return User(
             id = id ?: 0L,
             username = username.orEmpty(),
@@ -40,12 +34,12 @@ data class UserDTO(
             profileImageUrl = profileImageUrl,
             phoneNumber = phoneNumber,
             emailAddress = emailAddress,
-            dateOfBirth = dob
+            dateOfBirth = dateOfBirth?.let { Instant.ofEpochSecond(it) }
         )
     }
 }
 
-fun User.toUserDTO() : UserDTO {
+fun User.toUserDTO(): UserDTO {
     return UserDTO(
         id = if (id == 0L) null else id,
         username = username,
@@ -53,9 +47,7 @@ fun User.toUserDTO() : UserDTO {
         profileImageUrl = profileImageUrl,
         phoneNumber = phoneNumber,
         emailAddress = emailAddress,
-        dateOfBirth = dateOfBirth?.let {
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date.from(it))
-        },
+        dateOfBirth = dateOfBirth?.epochSecond,
     )
 }
 

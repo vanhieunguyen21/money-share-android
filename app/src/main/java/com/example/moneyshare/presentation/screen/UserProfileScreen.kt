@@ -21,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.moneyshare.R
 import com.example.moneyshare.constant.Constant.USER_PROFILE_IMAGE_BASE_URL
+import com.example.moneyshare.constant.getUserProfileImageLink
 import com.example.moneyshare.presentation.navigation.NavigationRoute
 import com.example.moneyshare.presentation.viewModel.UserProfileViewModel
 import com.example.moneyshare.util.limitLength
@@ -64,7 +65,10 @@ fun UserProfileScreen(
             ) {
                 Spacer(modifier = Modifier.height(50.dp))
                 GlideImage(
-                    imageModel = { "$USER_PROFILE_IMAGE_BASE_URL${user.profileImageUrl}" },
+                    imageModel = {
+                        user.profileImageUrl?.let { getUserProfileImageLink(it) }
+                            ?: R.drawable.default_profile_image
+                    },
                     modifier = Modifier
                         .size(100.dp)
                         .clip(CircleShape)

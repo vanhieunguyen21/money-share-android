@@ -89,9 +89,10 @@ fun DashboardScreen(
             ExpandableFloatingActionButton(items)
         }
     ) { padding ->
-        val p = padding
         // List of groups
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)) {
             Text(
                 text = "Your Groups",
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -104,7 +105,7 @@ fun DashboardScreen(
                         .padding(horizontal = 12.dp)
                         .clickable {
                             navController.navigate(
-                                NavigationRoute.GroupDashboardScreen.routeWithArgument(
+                                NavigationRoute.GroupNavigation.routeWithArguments(
                                     group.id
                                 )
                             )

@@ -134,7 +134,7 @@ fun CreateGroupScreen(
         }
     }
 
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(Unit) {
         viewModel.createGroupStatus.collectLatest { status ->
             when (status) {
                 JobStatus.Processing -> {

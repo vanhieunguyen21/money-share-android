@@ -3,6 +3,10 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Projects/AndroidStudioProjects/MoneyShare/app/src/main/res/drawable/ic_accepted.xml" value="0.1145" />
+        <entry key="..\:/Projects/AndroidStudioProjects/MoneyShare/app/src/main/res/drawable/ic_arrow_back.xml" value="0.1145" />
+        <entry key="..\:/Projects/AndroidStudioProjects/MoneyShare/app/src/main/res/drawable/ic_close.xml" value="0.1145" />
+        <entry key="..\:/Projects/AndroidStudioProjects/MoneyShare/app/src/main/res/drawable/ic_denied.xml" value="0.1145" />
         <entry key="..\:/Projects/AndroidStudioProjects/MoneyShare/app/src/main/res/layout/activity_main.xml" value="0.12360688956433637" />
       </map>
     </option>

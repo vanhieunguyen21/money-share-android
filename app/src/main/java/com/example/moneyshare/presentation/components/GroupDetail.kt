@@ -12,30 +12,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.skydoves.landscapist.glide.GlideImage
 import com.example.moneyshare.R
+import com.example.moneyshare.constant.getUserProfileImageLink
 import com.example.moneyshare.domain.model.Expense
 import com.example.moneyshare.domain.model.ExpenseStatus
 import com.example.moneyshare.domain.model.Group
+import com.example.moneyshare.domain.model.Role
+import com.example.moneyshare.presentation.navigation.NavigationRoute
 import java.text.DateFormat
 import java.util.*
 
 @Composable
 fun GroupDetail(
     group: Group,
+    navController: NavController,
     modifier: Modifier = Modifier,
     memberId: Long = 0L,
 ) {
-    var memberExpense by remember(group, memberId) {
-        mutableStateOf(group.members.find { it.user.id == memberId }?.totalExpense)
+    val member by remember(group, memberId) {
+        mutableStateOf(group.members.find { it.user.id == memberId })
     }
+    val isManager by remember(member) { mutableStateOf((member?.role == Role.Manager)) }
 
     Column(modifier = modifier) {
         // Group statistics
@@ -55,7 +58,7 @@ fun GroupDetail(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "$%.2f".format(memberExpense),
+                        text = "$%.2f".format(member?.totalExpense),
                         modifier = Modifier.fillMaxWidth(),
                         style = MaterialTheme.typography.body1,
                         textAlign = TextAlign.Center
@@ -109,6 +112,9 @@ fun GroupDetail(
         }
 
         // Functionality
+        Button(onClick = { navController.navigate(NavigationRoute.GroupNavigation.CreateExpenseScreen.route) }) {
+            Text(text = "Create Expense")
+        }
 
         // Expense history
         Text(
@@ -118,7 +124,7 @@ fun GroupDetail(
         )
         LazyColumn {
             items(group.expenses) { expense ->
-                ExpenseItem(expense)
+                ExpenseItem(expense, isManager = isManager)
                 Divider()
             }
         }
@@ -130,7 +136,7 @@ fun ExpenseItem(
     expense: Expense,
     modifier: Modifier = Modifier,
     isManager: Boolean = false,
-    showStatus: Boolean = false,
+    showStatus: Boolean = true,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
 
@@ -142,13 +148,16 @@ fun ExpenseItem(
             modifier = Modifier.height(80.dp)
         ) {
             GlideImage(
-                imageModel = ImageBitmap
-                    .imageResource(id = R.drawable.default_profile_image)
-                    .asAndroidBitmap(),
+                imageModel = {
+                    expense.owner?.user?.profileImageUrl?.let {
+                        getUserProfileImageLink(it)
+                    } ?: R.drawable.default_profile_image
+                },
                 modifier = Modifier
                     .size(80.dp)
                     .padding(10.dp)
                     .clip(CircleShape),
+                failure = { R.drawable.default_profile_image }
             )
 
             Column(
@@ -173,7 +182,6 @@ fun ExpenseItem(
                             status = expense.status,
                             modifier = Modifier
                                 .wrapContentWidth(Alignment.End)
-                                .width(60.dp)
                                 .align(Alignment.CenterVertically)
                         )
                     }
@@ -190,7 +198,7 @@ fun ExpenseItem(
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = DateFormat.getDateInstance().format(Date.from(expense.purchaseTime)),
+                        text = DateFormat.getDateInstance().format(Date.from(expense.timestamp)),
                         style = MaterialTheme.typography.body2,
                         modifier = Modifier
                             .wrapContentWidth(Alignment.End)
@@ -211,7 +219,7 @@ fun ExpenseItem(
                             .align(Alignment.CenterVertically)
                     )
                     Text(
-                        text = expense.owner.user.displayName,
+                        text = expense.owner?.user?.displayName ?: "",
                         style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold),
                         modifier = Modifier
                             .wrapContentWidth(Alignment.Start)
@@ -219,7 +227,7 @@ fun ExpenseItem(
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = DateFormat.getTimeInstance().format(Date.from(expense.purchaseTime)),
+                        text = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date.from(expense.timestamp)),
                         style = MaterialTheme.typography.body2,
                         modifier = Modifier
                             .wrapContentWidth(Alignment.End)

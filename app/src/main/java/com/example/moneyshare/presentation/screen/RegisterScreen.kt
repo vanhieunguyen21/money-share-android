@@ -33,7 +33,7 @@ fun RegisterScreen(
 ) {
     val registerStatus = viewModel.registerStatus.collectAsState(JobStatus.Idle)
 
-    val allFieldsValidated = remember {
+    val allFieldsValidated by remember {
         derivedStateOf {
             viewModel.usernameValidated && viewModel.displayNameValidated &&
                     viewModel.passwordValidated && viewModel.confirmPasswordValidated
@@ -176,7 +176,7 @@ fun RegisterScreen(
             Button(
                 onClick = { viewModel.register() },
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                enabled = allFieldsValidated.value
+                enabled = allFieldsValidated
             ) {
                 Text(text = "Register", color = MaterialTheme.colors.onPrimary)
             }

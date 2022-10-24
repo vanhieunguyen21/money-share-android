@@ -2,11 +2,10 @@ package com.example.moneyshare.network.dto
 
 import com.example.moneyshare.domain.model.Expense
 import com.example.moneyshare.domain.model.ExpenseStatus
-import com.example.moneyshare.domain.model.Member
-import com.example.moneyshare.domain.model.User
 import com.google.gson.annotations.SerializedName
-import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -19,12 +18,16 @@ data class ExpenseDTO(
     val description: String? = null,
     @SerializedName("amount")
     val amount: Float? = null,
-    @SerializedName("purchaseTime")
-    val purchaseTime: String? = null,
+    @SerializedName("timestamp")
+    val timestamp: Long? = null,
     @SerializedName("status")
     val status: String? = null,
-    @SerializedName("memberID")
-    val memberID: Long? = null,
+    @SerializedName("creatorID")
+    val creatorID: Long? = null,
+    @SerializedName("ownerID")
+    val ownerID: Long? = null,
+    @SerializedName("groupID")
+    val groupID: Long? = null,
 ) {
     fun toExpense(): Expense {
         return Expense(
@@ -32,9 +35,7 @@ data class ExpenseDTO(
             title = title.orEmpty(),
             description = description,
             amount = amount ?: 0f,
-            purchaseTime = purchaseTime?.let {
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it)?.toInstant()
-            } ?: Instant.now(),
+            timestamp = timestamp?.let { Instant.ofEpochSecond(it) } ?: Instant.EPOCH,
             status = when (status) {
                 null -> ExpenseStatus.Pending
                 "pending" -> ExpenseStatus.Pending
@@ -42,8 +43,22 @@ data class ExpenseDTO(
                 "denied" -> ExpenseStatus.Denied
                 else -> ExpenseStatus.Pending
             },
-            owner = Member(User(id = memberID?: 0L))
+            creatorID = creatorID ?: 0L,
+            ownerID = ownerID ?: 0L,
+            groupID = groupID ?: 0L,
         )
     }
+}
 
+fun Expense.toExpenseDTO(): ExpenseDTO {
+    return ExpenseDTO(
+        id = id,
+        title = title,
+        description = description,
+        amount = amount,
+        timestamp = timestamp.epochSecond,
+        creatorID = creatorID,
+        ownerID = ownerID,
+        groupID = groupID,
+    )
 }

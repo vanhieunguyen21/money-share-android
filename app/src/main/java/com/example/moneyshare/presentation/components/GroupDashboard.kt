@@ -117,10 +117,10 @@ fun GroupDashboard(
                     }
                 }
 
-                GroupSummary(
-                    groups[selectedGroupIndex!!],
-                    modifier = Modifier.weight(1f)
-                )
+//                GroupSummary(
+//                    groups[selectedGroupIndex!!],
+//                    modifier = Modifier.weight(1f)
+//                )
 
                 Button(
                     onClick = { },

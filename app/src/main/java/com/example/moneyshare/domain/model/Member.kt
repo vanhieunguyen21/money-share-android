@@ -9,4 +9,8 @@ data class Member(
     val role: Role = Role.Member,
     val totalExpense: Float = 0f,
     val expenses: List<Expense> = listOf(),
-)
+) {
+    constructor(id : Long) : this(user = User(id))
+
+    val id : Long = user.id
+}

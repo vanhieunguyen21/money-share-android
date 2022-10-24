@@ -12,5 +12,5 @@ data class UpdateUserRequest(
     @SerializedName("emailAddress")
     val emailAddress: String? = null,
     @SerializedName("dateOfBirth")
-    val dateOfBirth: String? = null,
+    val dateOfBirth: Long? = null,
 )

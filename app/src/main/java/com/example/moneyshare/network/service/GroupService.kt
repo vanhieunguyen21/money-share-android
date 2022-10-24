@@ -6,19 +6,19 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface GroupService {
-    @POST
+    @POST("group")
     suspend fun createGroup(
         @Header("Authorization") accessToken: String,
         @Body request: GroupCreationRequest,
     ): Response<GroupDTO>
 
-    @GET("user/{userID}")
+    @GET("group/user/{userID}")
     suspend fun getGroupByUser(
         @Header("Authorization") accessToken: String,
         @Path("userID") userID: Long,
     ): Response<List<GroupDTO>>
 
-    @GET("{groupID}")
+    @GET("group/{groupID}")
     suspend fun getGroupByID(
         @Header("Authorization") accessToken: String,
         @Path("groupID") groupID: Long,

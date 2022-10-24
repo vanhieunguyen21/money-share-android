@@ -3,6 +3,7 @@ package com.example.moneyshare.di
 import com.example.moneyshare.auth.Auth
 import com.example.moneyshare.auth.OkhttpAuthenticator
 import com.example.moneyshare.constant.Constant
+import com.example.moneyshare.network.service.ExpenseService
 import com.example.moneyshare.network.service.GroupService
 import com.example.moneyshare.network.service.UserService
 import com.example.moneyshare.repository.UserRepository
@@ -36,9 +37,19 @@ object NetworkModule {
     @Provides
     fun provideGroupService(gson: Gson): GroupService {
         return Retrofit.Builder()
-            .baseUrl("${Constant.IP}:${Constant.PORT}/group/")
+            .baseUrl("${Constant.IP}:${Constant.PORT}/")
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(GroupService::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideExpenseService(gson: Gson): ExpenseService {
+        return Retrofit.Builder()
+            .baseUrl("${Constant.IP}:${Constant.PORT}/")
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+            .create(ExpenseService::class.java)
     }
 }

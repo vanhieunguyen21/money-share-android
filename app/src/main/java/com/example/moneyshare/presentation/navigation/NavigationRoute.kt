@@ -10,9 +10,13 @@ sealed class NavigationRoute(
     object UserProfileScreen : NavigationRoute("userProfile")
     object EditUserProfileScreen : NavigationRoute("editUserProfile")
     object CreateGroupScreen : NavigationRoute("createGroup")
-    object GroupDashboardScreen : NavigationRoute("groupDashboard/{groupID}") {
-        fun routeWithArgument(groupID: Long): String {
-            return "groupDashboard/$groupID"
+
+    object GroupNavigation : NavigationRoute("group/{groupID}") {
+        fun routeWithArguments(groupID: Long): String {
+            return "group/$groupID"
         }
+
+        object GroupDashboardScreen : NavigationRoute("groupDashboard")
+        object CreateExpenseScreen : NavigationRoute("createExpense")
     }
 }

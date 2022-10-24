@@ -13,9 +13,12 @@ import com.example.moneyshare.auth.Auth
 import com.example.moneyshare.domain.model.JobStatus
 import com.example.moneyshare.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,7 +37,7 @@ class EditUserProfileViewModel @Inject constructor(
     var updateProfileErrorMessage by mutableStateOf("")
 
     var pickedProfileImageUri: Uri? = null
-    var uploadProfileImageStatus = MutableSharedFlow<JobStatus>()
+    val uploadProfileImageStatus = MutableSharedFlow<JobStatus>()
     var uploadProfileImageErrorMessage by mutableStateOf("")
 
     init {
@@ -62,8 +65,12 @@ class EditUserProfileViewModel @Inject constructor(
         emailAddress = value
     }
 
-    fun onDateOfBirthChange(value: Instant?) {
-        dateOfBirth = value
+    fun onDateOfBirthChange(year: Int, month: Int, day: Int) {
+        dateOfBirth = dateOfBirth?.atZone(ZoneId.of("UTC"))?.withDayOfMonth(day)?.withMonth(month)
+            ?.withYear(year)?.toInstant() ?: ZonedDateTime.of(
+            year, month, day, 0, 0, 0, 0,
+            ZoneId.of("UTC")
+        ).toInstant()
     }
 
     fun updateUser() {
@@ -71,7 +78,7 @@ class EditUserProfileViewModel @Inject constructor(
             val fieldChanged = ((displayName != it.displayName) ||
                     (phoneNumber != it.phoneNumber) ||
                     (emailAddress != it.emailAddress) ||
-                    (dateOfBirth != it.dateOfBirth))
+                    (dateOfBirth?.epochSecond != it.dateOfBirth?.epochSecond))
             if (!fieldChanged) {
                 viewModelScope.launch {
                     updateProfileErrorMessage = ""
@@ -119,8 +126,10 @@ class EditUserProfileViewModel @Inject constructor(
         try {
             val stream = app.contentResolver.openInputStream(pickedProfileImageUri!!)!!
             val fileCursor =
-                app.contentResolver.query(pickedProfileImageUri!!,
-                    null, null, null, null)!!
+                app.contentResolver.query(
+                    pickedProfileImageUri!!,
+                    null, null, null, null
+                )!!
             val nameIndex = fileCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             fileCursor.moveToFirst()
             val fileName = fileCursor.getString(nameIndex)

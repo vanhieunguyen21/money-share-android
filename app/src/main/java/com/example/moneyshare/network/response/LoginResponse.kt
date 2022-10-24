@@ -20,22 +20,13 @@ data class LoginResponse(
     @SerializedName("emailAddress")
     val emailAddress: String? = null,
     @SerializedName("dateOfBirth")
-    val dateOfBirth: String? = null,
+    val dateOfBirth: Long? = null,
     @SerializedName("accessToken")
     val accessToken: String,
     @SerializedName("refreshToken")
     val refreshToken: String,
 ) {
     fun getUser(): User {
-        var dob: Instant? = null
-        // Parse date of birth
-        if (dateOfBirth != null) {
-            try {
-                dob = Instant.parse(dateOfBirth+"T00:00:00Z")
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
         return User(
             id = id ?: 0L,
             username = username.orEmpty(),
@@ -43,7 +34,7 @@ data class LoginResponse(
             profileImageUrl = profileImageUrl,
             phoneNumber = phoneNumber,
             emailAddress = emailAddress,
-            dateOfBirth = dob
+            dateOfBirth = dateOfBirth?.let { Instant.ofEpochSecond(it) }
         )
     }
 }

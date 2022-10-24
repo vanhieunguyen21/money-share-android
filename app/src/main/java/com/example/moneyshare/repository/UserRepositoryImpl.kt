@@ -134,10 +134,7 @@ class UserRepositoryImpl(
             password = password,
             phoneNumber = phoneNumber,
             emailAddress = emailAddress,
-            dateOfBirth = if (dateOfBirth == null) null else {
-                val zonedDate = dateOfBirth.atZone(ZoneId.of("UTC"))
-                "%04d-%02d-%02d".format(zonedDate.year, zonedDate.monthValue, zonedDate.dayOfMonth)
-            }
+            dateOfBirth = dateOfBirth?.epochSecond,
         )
         val response: Response<UserDTO>
         try {
@@ -163,7 +160,8 @@ class UserRepositoryImpl(
         inputStream: InputStream,
         fileName: String?,
     ): Result<User> {
-        val fileBody = RequestBody.create(MediaType.parse("multipart/form-data"), inputStream.readBytes())
+        val fileBody =
+            RequestBody.create(MediaType.parse("multipart/form-data"), inputStream.readBytes())
         val filePart = MultipartBody.Part.createFormData("file", fileName, fileBody)
         val response: Response<UserDTO>
         try {

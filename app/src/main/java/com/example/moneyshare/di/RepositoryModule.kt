@@ -1,12 +1,10 @@
 package com.example.moneyshare.di
 
+import com.example.moneyshare.network.service.ExpenseService
 import com.example.moneyshare.network.service.GroupService
 import com.example.moneyshare.room.AppDatabase
 import com.example.moneyshare.network.service.UserService
-import com.example.moneyshare.repository.GroupRepository
-import com.example.moneyshare.repository.GroupRepositoryImpl
-import com.example.moneyshare.repository.UserRepository
-import com.example.moneyshare.repository.UserRepositoryImpl
+import com.example.moneyshare.repository.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,5 +24,11 @@ object RepositoryModule {
     @Provides
     fun provideUserRepository(userService: UserService): UserRepository {
         return UserRepositoryImpl(userService)
+    }
+
+    @Singleton
+    @Provides
+    fun provideExpenseRepository(expenseService: ExpenseService): ExpenseRepository {
+        return ExpenseRepositoryImpl(expenseService)
     }
 }

@@ -4,14 +4,11 @@ import android.app.DatePickerDialog
 import android.widget.DatePicker
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.moneyshare.R
 import com.example.moneyshare.constant.Constant
+import com.example.moneyshare.constant.getUserProfileImageLink
 import com.example.moneyshare.domain.model.JobStatus
 import com.example.moneyshare.presentation.viewModel.EditUserProfileViewModel
 import com.skydoves.landscapist.glide.GlideImage
@@ -41,7 +39,7 @@ import java.time.ZoneId
 @Composable
 fun EditUserProfileScreen(
     navController: NavController,
-    snackbarHostState: SnackbarHostState = rememberScaffoldState().snackbarHostState,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     snackbarScope: CoroutineScope = rememberCoroutineScope(),
     viewModel: EditUserProfileViewModel = hiltViewModel(),
 ) {
@@ -58,45 +56,15 @@ fun EditUserProfileScreen(
             if (uri != null) viewModel.uploadProfileImage()
         }
 
-    // Declaring DatePickerDialog and setting
-    // initial values as current values (present year, month and day)
-    val day = remember(viewModel.dateOfBirth) {
-        if (viewModel.dateOfBirth != null) {
-            val zonedTime = viewModel.dateOfBirth!!.atZone(ZoneId.of("UTC"))
-            mutableStateOf(zonedTime.dayOfMonth)
-        } else {
-            val zonedTime = Instant.now().atZone(ZoneId.of("UTC"))
-            mutableStateOf(zonedTime.dayOfMonth)
-        }
-    }
-    val month = remember(viewModel.dateOfBirth) {
-        if (viewModel.dateOfBirth != null) {
-            val zonedTime = viewModel.dateOfBirth!!.atZone(ZoneId.of("UTC"))
-            mutableStateOf(zonedTime.monthValue)
-        } else {
-            val zonedTime = Instant.now().atZone(ZoneId.of("UTC"))
-            mutableStateOf(zonedTime.monthValue)
-        }
-    }
-    val year = remember(viewModel.dateOfBirth) {
-        if (viewModel.dateOfBirth != null) {
-            val zonedTime = viewModel.dateOfBirth!!.atZone(ZoneId.of("UTC"))
-            mutableStateOf(zonedTime.year)
-        } else {
-            val zonedTime = Instant.now().atZone(ZoneId.of("UTC"))
-            mutableStateOf(zonedTime.year)
-        }
-    }
-
-    val mDatePickerDialog = remember(year.value, month.value, day.value) {
+    // Date picker dialog for date of birth
+    val datePickerDialog = remember {
+        val zonedTime = viewModel.dateOfBirth?.atZone(ZoneId.of("UTC")) ?: Instant.now()
+            .atZone(ZoneId.of("UTC"))
         DatePickerDialog(
             context,
-            { _: DatePicker, mYear: Int, mMonth: Int, mDay: Int ->
-                val dateString =
-                    "%04d-%02d-%02dT00:00:00Z".format(mYear, mMonth + 1, mDay)
-                val newDate = Instant.parse(dateString)
-                viewModel.onDateOfBirthChange(newDate)
-            }, year.value, month.value - 1, day.value
+            { _: DatePicker, year: Int, month: Int, day: Int ->
+                viewModel.onDateOfBirthChange(year, month + 1, day)
+            }, zonedTime.year, zonedTime.monthValue - 1, zonedTime.dayOfMonth
         )
     }
 
@@ -106,7 +74,7 @@ fun EditUserProfileScreen(
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_close),
-                        contentDescription = "",
+                        contentDescription = "Cancel",
                         tint = MaterialTheme.colors.onPrimary
                     )
                 }
@@ -116,10 +84,10 @@ fun EditUserProfileScreen(
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colors.onPrimary
                 )
-                IconButton(onClick = { viewModel.updateUser() }) {
+                IconButton(onClick = viewModel::updateUser) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_accepted),
-                        contentDescription = "",
+                        contentDescription = "Apply",
                         tint = MaterialTheme.colors.onPrimary
                     )
                 }
@@ -132,10 +100,14 @@ fun EditUserProfileScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp)
         ) {
             Spacer(modifier = Modifier.height(50.dp))
             GlideImage(
-                imageModel = { "${Constant.USER_PROFILE_IMAGE_BASE_URL}${viewModel.profileImageUrl}" },
+                imageModel = {
+                    viewModel.profileImageUrl?.let { getUserProfileImageLink(it) }
+                        ?: R.drawable.default_profile_image
+                },
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
@@ -155,7 +127,9 @@ fun EditUserProfileScreen(
             Spacer(modifier = Modifier.height(20.dp))
             TextField(
                 value = viewModel.displayName.orEmpty(),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colors.surface),
                 onValueChange = viewModel::onDisplayNameChange,
                 label = { Text(text = "Display Name") },
                 maxLines = 1,
@@ -195,15 +169,14 @@ fun EditUserProfileScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             TextField(
-                value =
-                if (viewModel.dateOfBirth != null) {
-                    val zonedTime = viewModel.dateOfBirth!!.atZone(ZoneId.of("UTC"))
+                value = viewModel.dateOfBirth?.let {
+                    val zonedTime = it.atZone(ZoneId.of("UTC"))
                     "%02d-%02d-%04d".format(
                         zonedTime.dayOfMonth,
                         zonedTime.monthValue,
                         zonedTime.year
                     )
-                } else "",
+                } ?: "",
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = {},
                 label = { Text(text = "Date of Birth") },
@@ -212,7 +185,7 @@ fun EditUserProfileScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_date),
                         contentDescription = "",
-                        modifier = Modifier.clickable { mDatePickerDialog.show() }
+                        modifier = Modifier.clickable { datePickerDialog.show() }
                     )
                 },
                 maxLines = 1,
@@ -244,7 +217,9 @@ fun EditUserProfileScreen(
                 }
             }
         }
-    } else if (showUpdatingProfileImageDialog) {
+    }
+
+    if (showUpdatingProfileImageDialog) {
         Dialog(onDismissRequest = { }) {
             Card(
                 modifier = Modifier
@@ -271,6 +246,37 @@ fun EditUserProfileScreen(
     }
 
     LaunchedEffect(Unit) {
+        viewModel.updateProfileStatus.collectLatest { status ->
+            when (status) {
+                JobStatus.Processing -> {
+                    showUpdatingProfileDialog = true
+                }
+                JobStatus.Success -> {
+                    showUpdatingProfileDialog = false
+                    navController.popBackStack()
+                    snackbarScope.launch {
+                        snackbarHostState.showSnackbar("Profile updated", "Hide")
+                    }
+                }
+                JobStatus.Failure -> {
+                    showUpdatingProfileDialog = false
+                    snackbarScope.launch {
+                        if (viewModel.updateProfileErrorMessage.isEmpty())
+                            snackbarHostState.showSnackbar("Update profile failed", "Hide")
+                        else snackbarHostState.showSnackbar(
+                            viewModel.updateProfileErrorMessage,
+                            "Hide"
+                        )
+                    }
+                }
+                else -> {
+                    showUpdatingProfileDialog = false
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit){
         viewModel.uploadProfileImageStatus.collectLatest { status ->
             when (status) {
                 JobStatus.Processing -> {
@@ -280,51 +286,21 @@ fun EditUserProfileScreen(
                     showUpdatingProfileImageDialog = false
                     navController.popBackStack()
                     snackbarScope.launch {
-                        snackbarHostState.showSnackbar("Profile updated", "Hide")
-                    }
-                }
-                JobStatus.Failure -> {
-                    showUpdatingProfileImageDialog = false
-                    snackbarScope.launch {
-                        if (viewModel.updateProfileErrorMessage.isEmpty())
-                            snackbarHostState.showSnackbar("Update profile failed", "Hide")
-                        else snackbarHostState.showSnackbar(
-                            viewModel.updateProfileErrorMessage, "Hide"
-                        )
-                    }
-                }
-                else -> {
-                    showUpdatingProfileImageDialog = false
-                }
-            }
-        }
-
-        viewModel.updateProfileStatus.collectLatest { status ->
-            when (status) {
-                JobStatus.Processing -> {
-                    showUpdatingProfileDialog = true
-                }
-                JobStatus.Success -> {
-                    showUpdatingProfileDialog = false
-                    snackbarScope.launch {
                         snackbarHostState.showSnackbar("Profile image updated", "Hide")
                     }
-
                 }
                 JobStatus.Failure -> {
-                    showUpdatingProfileDialog = false
+                    showUpdatingProfileImageDialog = false
                     snackbarScope.launch {
                         if (viewModel.uploadProfileImageErrorMessage.isEmpty())
-                            snackbarHostState.showSnackbar("Update profile image failed", "Hide")
+                            snackbarHostState.showSnackbar("Upload profile image failed", "Hide")
                         else snackbarHostState.showSnackbar(
-                            viewModel.uploadProfileImageErrorMessage,
-                            "Hide"
+                            viewModel.uploadProfileImageErrorMessage, "Hide"
                         )
                     }
-
                 }
                 else -> {
-                    showUpdatingProfileDialog = false
+                    showUpdatingProfileImageDialog = false
                 }
             }
         }
